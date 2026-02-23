@@ -186,7 +186,7 @@ void MyImage::greyScale()
     int width =(int) this->size.x;
     int height = (int) this-> size.y;
 
-    //looping over eavh pixel
+    //looping over each pixel
     for (int i =0;i<height;i++)
     {
         for (int j=0;j<width;j++)
@@ -208,12 +208,56 @@ void MyImage::greyScale()
     }
 }
 
-void MyImage::flipHorizontal() {
+void MyImage::flipHorizontal()
+{
     cout << "Flip Horizontal" << endl;
+
+    int width =(int) this->size.x;
+    int height = (int) this-> size.y;
+
+    for (int i =0;i<height;i++)
+    {
+        //swapping pixels from right side to left side only halfway
+        for (int j=0;j<width/2;j++)
+        {
+           int indexL= (i * width) + j;
+           int indexR= (i * width) + (width-1)-j;
+
+            //swap
+            RGB temp = this->pixels[indexL];
+            this->pixels[indexL] = this->pixels[indexR];
+            this->pixels[indexR] = temp;
+        }
+    }
+
 }
-void MyImage::flipVertical() {
+void MyImage::flipVertical()
+{
     cout << "Flip Vertical" << endl;
+
+    int width =(int) this->size.x;
+    int height = (int) this-> size.y;
+
+    //go through eacg row
+    for (int j =0;j<width;j++)
+    {
+        //swapping pixels from top to bottom only halfway
+        for (int i =0;i<height/2;i++)
+        {
+
+            int indexT = (i * width)+j;
+            int indexB= (((height -1)-i) * width )+ j;
+
+            //swap
+            RGB temp = this->pixels[indexT];
+            this-> pixels[indexT] = this->pixels[indexB];
+            this->pixels[indexB] = temp;
+
+
+        }
+    }
 }
+
 void MyImage::advancedFeature1() {
     cout << "Advanced Feature 1" << endl;
 }
