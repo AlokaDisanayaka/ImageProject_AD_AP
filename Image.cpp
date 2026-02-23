@@ -3,8 +3,8 @@
 //
 
 #include "Image.h"
-
 #include <iostream>
+#include <algorithm>
 
 /**
  * This function creates the image object, and then loads in the image from the given filename.
@@ -179,8 +179,33 @@ void MyImage::filterBlue() {
     cout << "Filter Blue" << endl;
 }
 
-void MyImage::greyScale() {
-    cout << "Filter Greyscale" << endl;
+void MyImage::greyScale()
+{
+    cout << "Grey Scale" << endl;
+
+    int width =(int) this->size.x;
+    int height = (int) this-> size.y;
+
+    //looping over eavh pixel
+    for (int i =0;i<height;i++)
+    {
+        for (int j=0;j<width;j++)
+        {
+            int index= (i * width) + j;
+
+            unsigned char r= this->pixels[index].r;
+            unsigned char g= this->pixels[index].g;
+            unsigned char b= this->pixels[index].b;
+
+            unsigned char grey = (unsigned char) ((r+g+b)/3);
+
+            this->pixels[index].r = grey;
+            this->pixels[index].g = grey;
+            this->pixels[index].b = grey;
+
+        }
+
+    }
 }
 
 void MyImage::flipHorizontal() {
