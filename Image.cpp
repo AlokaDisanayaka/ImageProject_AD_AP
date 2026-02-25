@@ -261,8 +261,70 @@ void MyImage::flipVertical()
 void MyImage::advancedFeature1() {
     cout << "Advanced Feature 1" << endl;
 }
-void MyImage::advancedFeature2() {
-    cout << "Advanced FEature 2" << endl;
+
+//using a 3 x 3 Guassian kernel
+void MyImage::advancedFeature2()
+{
+    cout << "Gaussian Blur" << endl;
+    int width = (int) this-> size.x;
+    int height = (int) this-> size.y;
+
+    //copy the original pixels to avoid using already blurred pixels
+    vector <RGB> original = this->pixels;
+
+    //Gaussian kernel
+    int kernel[3][3] = {
+        {1,2,1},
+        {2,4,2},
+        {1,2,1}
+    };
+
+    int kernelSum = 16;
+
+    //loop through every pixel of the image
+    for (int i =0;i<height;i++)
+    {
+          for (int j =0;j<width;j++)
+          {
+              int sumR=0;
+              int sumG=0;
+              int sumB=0;
+
+              //apply kernel around i,j
+              for (int ki =-1;ki<=1;ki++)//kernel row
+              {
+                  for (int kj =-1;kj<=1;kj++) //kernel column
+                  {
+                     int sampleI= i+ki;
+                      int sampleJ= j+kj;
+
+                      //clamp to sides to avoid going outside the image
+                      sampleI = std::max(0, std::min(sampleI, height - 1)); //if below 0, make it 0
+                      sampleJ = std::max(0, std::min(sampleJ, width - 1)); //if aove max , make it max
+
+                      int weight= kernel [ki+1][kj+1];
+
+                      //convert row,column into index
+                      int sampleIndex= (sampleI* width) + sampleJ;
+
+                      sumR= sumR+original[sampleIndex].r *weight;
+                      sumG= sumG+original[sampleIndex].g *weight;
+                      sumB= sumB+original[sampleIndex].b *weight;
+                  }
+
+              }
+
+              int index =(i * width) + j;
+
+              this->pixels[index].r = (unsigned char)(sumR/kernelSum);
+              this->pixels[index].g = (unsigned char)(sumG/kernelSum);
+              this->pixels[index].b = (unsigned char)(sumB/kernelSum);
+
+
+          }
+
+    }
+
 }
 void MyImage::advancedFeature3() {
     cout << "Advanced Feature 3" << endl;
