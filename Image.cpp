@@ -326,7 +326,12 @@ void MyImage::advancedFeature2()
     }
 
 }
-void MyImage::advancedFeature3() {
-    cout << "Advanced Feature 3" << endl;
+void MyImage::advancedFeature3()
+{
+
+
 }
 
+void MyImage::advancedFeatureExtra() {
+    cout << "Advanced Feature Extra" << endl;
+}
