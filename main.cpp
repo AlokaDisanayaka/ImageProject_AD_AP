@@ -35,10 +35,10 @@ int main()
     buttons.push_back(new Button(font, {660, 260}, {120, 30}, "Flip Vertical", [&images, &selectedImage](){images[selectedImage]->flipVertical();}));
     buttons.push_back(new Button(font, {660, 300}, {120, 30}, "Advanced Feature 1", [&images, &selectedImage](){images[selectedImage]->advancedFeature1();}));
     buttons.push_back(new Button(font, {660, 340}, {120, 30}, "Gaussian Blur", [&images, &selectedImage](){images[selectedImage]->advancedFeature2();}));
-    buttons.push_back(new Button(font, {660, 380}, {120, 30}, "Mirror Image", [&images, &selectedImage](){images[selectedImage]->advancedFeature3();}));
-    buttons.push_back(new Button(font, {660, 420}, {120, 30}, "Save", [&images, &selectedImage](){images[selectedImage]->save();}));
+    buttons.push_back(new Button(font, {660, 380}, {120, 30}, "Advance feature", [&images, &selectedImage](){images[selectedImage]->advancedFeature3();}));
     buttons.push_back(new Button(font, {660, 460}, {120, 30}, "Advanced Feature 2", [&images, &selectedImage](){images[selectedImage]->advancedFeatureExtra();}));
-
+    buttons.push_back(new Button(font, {660, 420}, {120, 30}, "Save", [&images, &selectedImage](){images[selectedImage]->save();}));
+    buttons.push_back(new Button(font, {660, 420}, {120, 30}, "Save", [&images, &selectedImage](){images[selectedImage]->save();}));
 
     buttons.push_back(new Button(font, {190, imgH+30}, {120, 30}, "<", [&images, &selectedImage](){if (selectedImage > 0) selectedImage--;}));
     buttons.push_back(new Button(font, {330, imgH+30}, {120, 30}, ">", [&images, &selectedImage]() {

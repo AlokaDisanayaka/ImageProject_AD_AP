@@ -5,6 +5,9 @@
 #include "Image.h"
 #include <iostream>
 #include <algorithm>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
 
 /**
  * This function creates the image object, and then loads in the image from the given filename.
@@ -353,5 +356,67 @@ void MyImage::advancedFeature3()
 }
 
 void MyImage::advancedFeatureExtra() {
-    cout << "Advanced Feature Extra" << endl;
+    cout << "Cartoon Filter" << endl;
+
+    int width =(int) this-> size.x;
+    int height = (int) this-> size.y;
+
+    //check if image exists
+    if (width <=0 || height <=0||this->pixels.empty())
+    {
+
+       cout << "Image is empty! Cannot apply cartoon filter" << endl;
+
+    }
+
+    //+++++++++++++++ 1.Light smoothing +++++++++++++++
+    // cartoon filter looks better with smothed version of the picture
+    //applying a 3x3 box blur to smooth the picture for better result
+
+    vector<RGB> smoothed = this->pixels; // start with original
+    vector<RGB> original = this->pixels; // copy to read from safely
+
+
+    for (int i= 0; i < height; i++)
+    {
+        for (int j = 0; j < width; j++)
+        {
+            int sumR = 0, sumG = 0, sumB = 0;
+            int count = 0;
+
+            //  the 3x3 area around i,j
+            for (int di = -1; di <= 1; di++)
+            {
+                for (int dj = -1; dj <= 1; dj++)
+                {
+                    int si = i + di;
+                    int sj = j + dj;
+
+                    // Clamp to avoid going outside the image
+                    si = std::max(0, std::min(si, width - 1));
+                    sj = std::max(0, std::min(sj, height - 1));
+
+                    int idx = (si * width) + sj;
+
+                    sumR += original[idx].r;
+                    sumG += original[idx].g;
+                    sumB += original[idx].b;
+                    count++;
+                }
+            }
+
+            int index = (i * width) + j;
+
+            // Average of neighbors
+            smoothed[index].r = (unsigned char)(sumR / count);
+            smoothed[index].g = (unsigned char)(sumG / count);
+            smoothed[index].b = (unsigned char)(sumB / count);
+        }
+    }
+
+    //Replace pixels with smoothed ones before k-means
+    this->pixels = smoothed;
+
+
+
 }
