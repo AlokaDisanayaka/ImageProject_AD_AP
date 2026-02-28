@@ -281,8 +281,39 @@ void MyImage::flipVertical()
     }
 }
 
-void MyImage::advancedFeature1() {
-    cout << "Advanced Feature 1" << endl;
+void MyImage::advancedFeature1()
+{
+    cout << "Rotate 90 Degrees" << endl;
+    int height = this->size.y;
+    int width = this->size.x;
+    //Swap width and height
+    int newHeight = width;
+    int newWidth = height;
+    //New vector to store the rotated image
+    vector<RGB> newPixels(newHeight*newWidth);
+
+    //Loop through every pixel
+    for (int y=0; y<height; ++y)
+    {
+        for (int x=0; x<width; ++x)
+        {
+            //Getting the index
+            int oldIndex = (y*width) + x;
+
+            int newX = (height-1) - y;
+            int newY = x;
+
+            //Create new index
+            int newIndex = (newY*newWidth) + newX;
+            //Moving pixels from original position into new position
+            newPixels[newIndex].r = this->pixels[oldIndex].r;
+            newPixels[newIndex].g = this->pixels[oldIndex].g;
+            newPixels[newIndex].b = this->pixels[oldIndex].b;
+        }
+    }
+    this->pixels = newPixels;
+    this->size.y = newHeight;
+    this->size.x = newWidth;
 }
 
 //using a 3 x 3 Guassian kernel
