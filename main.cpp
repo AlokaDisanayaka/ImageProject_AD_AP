@@ -25,25 +25,44 @@ int main()
 
     Font font("../ARIAL.TTF");
 
-    vector<Button*> buttons;
-    buttons.push_back(new Button(font, {660, 20}, {120, 30}, "Reload", [&images, &selectedImage](){images[selectedImage]->reload();}));
-    buttons.push_back(new Button(font, {660, 60}, {120, 30}, "Only Red", [&images, &selectedImage](){images[selectedImage]->filterRed();}));
-    buttons.push_back(new Button(font, {660, 100}, {120, 30}, "Only Green", [&images, &selectedImage](){images[selectedImage]->filterGreen();}));
-    buttons.push_back(new Button(font, {660, 140}, {120, 30}, "Only Blue", [&images, &selectedImage](){images[selectedImage]->filterBlue();}));
-    buttons.push_back(new Button(font, {660, 180}, {120, 30}, "Grey Scale", [&images, &selectedImage](){images[selectedImage]->greyScale();}));
-    buttons.push_back(new Button(font, {660, 220}, {120, 30}, "Flip Horizontal", [&images, &selectedImage](){images[selectedImage]->flipHorizontal();}));
-    buttons.push_back(new Button(font, {660, 260}, {120, 30}, "Flip Vertical", [&images, &selectedImage](){images[selectedImage]->flipVertical();}));
-    buttons.push_back(new Button(font, {660, 300}, {120, 30}, "Advanced Feature 1", [&images, &selectedImage](){images[selectedImage]->advancedFeature1();}));
-    buttons.push_back(new Button(font, {660, 340}, {120, 30}, "Gaussian Blur", [&images, &selectedImage](){images[selectedImage]->advancedFeature2();}));
-    buttons.push_back(new Button(font, {660, 380}, {120, 30}, "Advance feature", [&images, &selectedImage](){images[selectedImage]->advancedFeature3();}));
-    buttons.push_back(new Button(font, {660, 460}, {120, 30}, "Advanced Feature 2", [&images, &selectedImage](){images[selectedImage]->advancedFeatureExtra();}));
-    buttons.push_back(new Button(font, {660, 420}, {120, 30}, "Save", [&images, &selectedImage](){images[selectedImage]->save();}));
-    buttons.push_back(new Button(font, {660, 420}, {120, 30}, "Save", [&images, &selectedImage](){images[selectedImage]->save();}));
+   vector<Button*> buttons;
 
-    buttons.push_back(new Button(font, {190, imgH+30}, {120, 30}, "<", [&images, &selectedImage](){if (selectedImage > 0) selectedImage--;}));
-    buttons.push_back(new Button(font, {330, imgH+30}, {120, 30}, ">", [&images, &selectedImage]() {
-        if (selectedImage < images.size()-1) selectedImage++;
-    }));
+// ---- Layout settings ----
+int buttonX = 700;          // move column a bit right
+int buttonY = 15;           // top start
+int buttonW = 260;          // wider looks much better
+int buttonH = 35;           // slightly taller
+int gap  = 10;           // spacing between buttons
+
+auto addButton= [&](const string& text, Handler h)
+{
+    buttons.push_back(new Button(font, {buttonX, buttonY}, {(float)buttonW, (float)buttonH}, text, h));
+    buttonY += buttonH + gap;
+};
+
+// Buttons in a vertical column
+addButton("Reload",        [&images, &selectedImage](){ images[selectedImage]->reload(); });
+addButton("Only Red",      [&images, &selectedImage](){ images[selectedImage]->filterRed(); });
+addButton("Only Green",    [&images, &selectedImage](){ images[selectedImage]->filterGreen(); });
+addButton("Only Blue",     [&images, &selectedImage](){ images[selectedImage]->filterBlue(); });
+
+addButton("Grey Scale",    [&images, &selectedImage](){ images[selectedImage]->greyScale(); });
+addButton("Flip Horizontal",[&images, &selectedImage](){ images[selectedImage]->flipHorizontal(); });
+addButton("Flip Vertical", [&images, &selectedImage](){ images[selectedImage]->flipVertical(); });
+
+addButton("Rotate 90",     [&images, &selectedImage](){ images[selectedImage]->advancedFeature1(); });
+addButton("Gaussian Blur", [&images, &selectedImage](){ images[selectedImage]->advancedFeature2(); });
+addButton("Advance feature",[&images, &selectedImage](){ images[selectedImage]->advancedFeature3(); });
+addButton("Cartoon Filter",[&images, &selectedImage](){ images[selectedImage]->advancedFeatureExtra(); });
+
+addButton("Save",          [&images, &selectedImage](){ images[selectedImage]->save(); });
+
+// Navigation buttons (keep under image)
+buttons.push_back(new Button(font, {250, imgH + 40}, {60, 35}, "<",
+    [&images, &selectedImage](){ if (selectedImage > 0) selectedImage--; }));
+
+buttons.push_back(new Button(font, {330, imgH + 40}, {60, 35}, ">",
+    [&images, &selectedImage](){ if (selectedImage < (int)images.size() - 1) selectedImage++; }));
 
 
     while (window.isOpen())
