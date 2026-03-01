@@ -5,8 +5,6 @@
 #include "Image.h"
 #include <iostream>
 #include <algorithm>
-#include <cstdlib>
-#include <ctime>
 #include <cmath>
 
 /**
@@ -397,15 +395,21 @@ void MyImage::advancedFeatureExtra() {
     {
 
        cout << "Image is empty! Cannot apply cartoon filter" << endl;
+        return;
 
     }
 
-    //+++++++++++++++ 1.Light smoothing +++++++++++++++
-    // cartoon filter looks better with smothed version of the picture
-    //applying a 3x3 box blur to smooth the picture for better result
+    int totalPixels= width * height;
 
-    vector<RGB> smoothed = this->pixels; // start with original
-    vector<RGB> original = this->pixels; // copy to read from safely
+    //+++++++++++++++ 1.Light smoothing : 3x3 box blur+++++++++++++++
+    // cartoon filter looks better with smothed version of the picture
+    //each pixel becomes the average of its 3 x3 neighborhood
+    // newR = sumR/9
+    // newG= sumG/9
+    // newB= sumB/9
+
+    vector<RGB> original = this->pixels; // read from this
+    vector<RGB> smoothed = this->pixels; // write into here
 
 
     for (int i= 0; i < height; i++)
@@ -413,7 +417,7 @@ void MyImage::advancedFeatureExtra() {
         for (int j = 0; j < width; j++)
         {
             int sumR = 0, sumG = 0, sumB = 0;
-            int count = 0;
+            int count=0;
 
             //  the 3x3 area around i,j
             for (int di = -1; di <= 1; di++)
@@ -424,30 +428,229 @@ void MyImage::advancedFeatureExtra() {
                     int sj = j + dj;
 
                     // Clamp to avoid going outside the image
-                    si = std::max(0, std::min(si, width - 1));
-                    sj = std::max(0, std::min(sj, height - 1));
+                    si = std::max(0, std::min(si, height - 1));  // row clamp uses height
+                    sj = std::max(0, std::min(sj, width - 1));   // col clamp uses width
+                    int sampleIndex = (si * width) + sj;
 
-                    int idx = (si * width) + sj;
 
-                    sumR += original[idx].r;
-                    sumG += original[idx].g;
-                    sumB += original[idx].b;
+                    sumR += original[sampleIndex].r;
+                    sumG += original[sampleIndex].g;
+                    sumB += original[sampleIndex].b;
                     count++;
+
                 }
             }
 
             int index = (i * width) + j;
 
-            // Average of neighbors
+            // Average of the 9 pixels
             smoothed[index].r = (unsigned char)(sumR / count);
             smoothed[index].g = (unsigned char)(sumG / count);
             smoothed[index].b = (unsigned char)(sumB / count);
         }
     }
 
-    //Replace pixels with smoothed ones before k-means
+    //Replace pixels with smoothed version
     this->pixels = smoothed;
 
+   //++++++++++++++++++++ K-means colour quatization ++++++++++++++++++
+    //reducing image into K main colours -> flat regions -> cartoon look
+    //K-means algorithm:
+               //treating each pixel as a point in 3d RGB space
+    //Steps
+              //1=>choose K "centroids": starting colours
+              //2=>Assign each pixel to the closest centroid
+              //3=>Recompute each centroid as the mean of its assigned pixels
+              //repeat B and C for few iterations
+    //Distance : Euclidean distance squared
+              // d^2= (r-cr)^2 + (g - cg)^2 + (b - cb)^2
+              //using squared disatnce so dont need sqrt()
+    //closest centroid remains the same
 
+    const int K= 8;
+    const int Iterations=7;
+
+    struct Centroid
+    {
+
+        float r;
+        float g;
+        float b;
+
+    };
+
+    vector <Centroid> centroids(K);
+
+    //+++++++++++++++++++++Centroid Initialization++++++++++++++++++++
+    //K pixels spread evenly across the image
+    //ex=> if totalPixels=1000, K=10 | indices => 0,100,200,300,400,500,600,700,800,900
+    //this secures the same starting centroids every run
+
+    for (int c=0;c<K;c++)
+    {
+        int index= (c* totalPixels)/K; //evenly spaced index
+
+        centroids[c].r = (float)this->pixels[index].r;
+        centroids[c].g = (float)this->pixels[index].g;
+        centroids[c].b = (float)this->pixels[index].b;
+
+    }
+
+    //labels[p] stores which cluster pixels p belongs to
+     vector <int> labels (totalPixels,0);
+
+    //+++++++++++++++++Running K-means iterations++++++++++++++++++
+    for (int iter=0;iter<Iterations;iter++)
+    {
+        // to recompute centroid averages, we need sums and counts
+
+        vector <long long> sumR(K,0); //long long is used to avoid overflow when summing many pixels
+        vector <long long> sumG(K,0);
+        vector <long long> sumB(K,0);
+        vector <int> count(K,0);
+
+
+        //ASSIGN PIXELS TO THE NEAREST CENTROID
+             for (int p=0;p<totalPixels;p++)
+             {
+                 int pr=(int)this->pixels[p].r;
+                 int pg=(int)this->pixels[p].g;
+                 int pb=(int)this->pixels[p].b;
+
+                 int bestCluster=0;
+                 //start with infinite distance
+                 long long bestDistance=999999999999LL;
+
+                 // compare this pixel to each centroid
+                 for (int c = 0; c < K; c++)
+                 {
+                     int dr = pr - (int)centroids[c].r;
+                     int dg = pg - (int)centroids[c].g;
+                     int db = pb - (int)centroids[c].b;
+
+                     // Euclidean distance squared
+                     long long distance = (long long)dr * dr
+                                         + (long long)dg * dg
+                                         + (long long)db * db;
+
+                     // Keep the closest centroid
+                     if (distance < bestDistance)
+                     {
+                         bestDistance = distance;
+                         bestCluster = c;
+                     }
+                 }
+
+                 //store results , which centroid this pixel belongs to
+                 labels[p]= bestCluster;
+
+                 //add this pixel to that cluster sum
+                 sumR[bestCluster]=sumR[bestCluster]+pr;
+                 sumG[bestCluster]=sumG[bestCluster]+pg;
+                 sumB[bestCluster]=sumB[bestCluster]+pb;
+                 count[bestCluster]=count[bestCluster]+1;
+
+
+             }
+
+        //UPDATE CENTROIDS TO BE THE AVERAGE OF THEIR PIXELS
+        for (int c = 0; c < K; c++)
+        {
+            if (count[c] > 0)
+            {
+                // Mean AKA average
+                // cr = sumR / count
+                // cg = sumG / count
+                // cb = sumB / count
+                centroids[c].r = (float)sumR[c] / (float)count[c];
+                centroids[c].g = (float)sumG[c] / (float)count[c];
+                centroids[c].b = (float)sumB[c] / (float)count[c];
+            }
+            else
+            {
+                // if a centroid has no pixels (Which is rare to happen), reuse the centroid from a valid pixel index.
+
+                int index = (c * totalPixels) / K;
+                centroids[c].r = (float)this->pixels[index].r;
+                centroids[c].g = (float)this->pixels[index].g;
+                centroids[c].b = (float)this->pixels[index].b;
+            }
+        }
+
+    }
+
+    //+++++++++++++++++++ Recolour++++++++++++++++++++++++++++
+
+    //replace each pixel colour with its cluster centroid colour
+    for (int p=0;p<totalPixels;p++)
+    {
+        int c = labels[p];
+
+        int r = (int)centroids[c].r;
+        int g = (int)centroids[c].g;
+        int b = (int)centroids[c].b;
+
+        //clamp to valid byte range [0-255]
+        r=std::max(0, std::min(r,255));
+        g=std::max(0, std::min(g,255));
+        b=std::max(0, std::min(b,255));
+
+        this->pixels[p].r =(unsigned char) r;
+        this->pixels[p].g =(unsigned char) g;
+        this->pixels[p].b =(unsigned char) b;
+
+    }
+
+    //+++++++++++++++++++ Cartoon Outlines+++++++++++++++++
+    //add black outlines where colour changes sharply
+    // compare each pixe with => right neighbor , bottom neighbor
+    // colour difference measurement :
+                  //difference = [r1-r2]+[g1-g2]+[b1-b2]
+    //if difference > Threshhold -: drae a black line pixel
+
+    const int Threshhold= 80;
+    vector <RGB> outlined = this->pixels; // copy
+
+    for (int i =0;i<height;i++)
+    {
+        for (int j = 0; j < width; j++)
+        {
+            int idx = (i * width) + j;
+
+            int differenceRight = 0;
+            if (j < width - 1)
+            {
+                int idxR = (i * width) + (j + 1);
+
+                differenceRight =
+                    std::abs((int)this->pixels[idx].r - (int)this->pixels[idxR].r) +
+                    std::abs((int)this->pixels[idx].g - (int)this->pixels[idxR].g) +
+                    std::abs((int)this->pixels[idx].b - (int)this->pixels[idxR].b);
+            }
+
+            int diffDown = 0;
+            if (i < height - 1)
+            {
+                int idxD = ((i+ 1) * width) + j;
+
+                diffDown =
+                    std::abs((int)this->pixels[idx].r - (int)this->pixels[idxD].r) +
+                    std::abs((int)this->pixels[idx].g - (int)this->pixels[idxD].g) +
+                    std::abs((int)this->pixels[idx].b - (int)this->pixels[idxD].b);
+            }
+
+            // If either neighbor differs a lot -> outline
+            if (differenceRight > Threshhold|| diffDown > Threshhold)
+            {
+                outlined[idx].r = 0;
+                outlined[idx].g = 0;
+                outlined[idx].b = 0;
+            }
+        }
+
+
+    }
+
+    this->pixels = outlined;
 
 }
