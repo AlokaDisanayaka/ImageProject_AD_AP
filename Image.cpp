@@ -380,8 +380,136 @@ void MyImage::advancedFeature2()
 }
 void MyImage::advancedFeature3()
 {
+    cout << "Sobel Edge Detection" << endl;
 
+    //Retrieving width and height, casting float to int
+    int width  = (int) this->size.x;
+    int height = (int) this->size.y;
 
+    //Error checking
+    if (width<= 0|| height<=0 || this->pixels.empty())
+    {
+        return;
+    }
+
+    //Calculating total number of pixels
+    int totalPixels = width*height;
+
+    //Making a copy of the original pixels
+    vector<RGB> original = this->pixels;
+
+    //Loop through each pixel to apply greyscale filter
+    for (int i=0; i<totalPixels; ++i)
+    {
+        //Original r,g,b values
+        unsigned char r = original[i].r;
+        unsigned char g = original[i].g;
+        unsigned char b = original[i].b;
+
+        //Luminance formula
+        unsigned char grey = (unsigned char)
+        (
+            (0.299f*r)+(0.587f*g)+(0.114f*b)
+        );
+
+        //Replace each pixel
+        this->pixels[i].r = grey;
+        this->pixels[i].g = grey;
+        this->pixels[i].b = grey;
+    }
+
+    //Reuse gaussian blur filter to reduce noise
+    this->advancedFeature2();
+
+    //Blurred greyscale image
+    vector<RGB> blurred = this->pixels;
+
+    //Sobel kernels
+    int sobelX[3][3] =
+    {
+        {-1, 0, 1},
+        {-2, 0, 2},
+        {-1, 0, 1}
+    };
+
+    int sobelY[3][3] =
+    {
+        {-1, -2, -1},
+        { 0,  0,  0},
+        { 1,  2,  1}
+    };
+
+    //Storing the gradient strength at each pixel
+    vector<int> magnitudes(totalPixels, 0);
+    //Strongest edge used for normalisation
+    int maxMagnitude = 0;
+
+    //Compute gradients
+    for (int y=0; y<height; ++y)
+    {
+        for (int x=0; x<width; ++x)
+        {
+            //Horizontal and vertical gradients
+            int gx = 0;
+            int gy = 0;
+
+            //Loop through kernel rows and columns
+            for (int ky=-1; ky<=1; ++ky)
+            {
+                for (int kx=-1; kx<=1; ++kx)
+                {
+                    int sampleY = y+ky;
+                    int sampleX = x+kx;
+
+                    //Preventing going outside the image
+                    sampleY = std::max(0, std::min(sampleY, height-1));
+                    sampleX = std::max(0, std::min(sampleX, width-1));
+
+                    //Convert index
+                    int index = (sampleY*width) +sampleX;
+                    //Getting the intensity using the red channel
+                    int intensity = blurred[index].r;
+
+                    //Applying sobel
+                    gx += intensity*sobelX[ky + 1][kx + 1];
+                    gy += intensity*sobelY[ky + 1][kx + 1];
+                }
+            }
+            //Computing gradient magnitude
+            int magnitude = (int) std::sqrt(gx*gx + gy*gy);
+            //Storing magnitude
+            magnitudes[(y*width) +x] = magnitude;
+            //Tracking the maximum magnitude
+            if (magnitude>maxMagnitude)
+            {
+                maxMagnitude = magnitude;
+            }
+        }
+    }
+
+    //Normalise + threshold
+    for (int i=0; i<totalPixels; ++i)
+    {
+        float normalised = 0.0f;
+        if (maxMagnitude>0)
+        {
+            normalised = (float) magnitudes[i] / (float) maxMagnitude;
+        }
+
+        //Gamma correction to boost midstrength edges to make edges more visible
+        float gamma = 0.7f;
+        float corrected = pow(normalised, gamma);
+
+        //Contrast boost
+        float contrastBoost = 1.5f;
+        int newValue = (int) (corrected*255*contrastBoost);
+        newValue = std::min(255, newValue);
+
+        //Setting r, g, b to the same new value
+        this->pixels[i].r = newValue;
+        this->pixels[i].g = newValue;
+        this->pixels[i].b = newValue;
+    }
 }
 
 void MyImage::advancedFeatureExtra() {
