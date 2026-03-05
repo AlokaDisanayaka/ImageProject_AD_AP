@@ -52,7 +52,7 @@ addButton("Flip Vertical", [&images, &selectedImage](){ images[selectedImage]->f
 
 addButton("Rotate 90",     [&images, &selectedImage](){ images[selectedImage]->advancedFeature1(); });
 addButton("Gaussian Blur", [&images, &selectedImage](){ images[selectedImage]->advancedFeature2(); });
-addButton("Advance feature",[&images, &selectedImage](){ images[selectedImage]->advancedFeature3(); });
+addButton("Sobel Edge Detection",[&images, &selectedImage](){ images[selectedImage]->advancedFeature3(); });
 addButton("Cartoon Filter",[&images, &selectedImage](){ images[selectedImage]->advancedFeatureExtra(); });
 
 addButton("Save",          [&images, &selectedImage](){ images[selectedImage]->save(); });
